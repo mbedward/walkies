@@ -1,0 +1,16 @@
+Package: walkies
+Type: Package
+Title: Random walks
+Version: 0.1
+Date: 2015-07-06
+Authors@R: c(
+  person("Michael", "Bedward", email="michael.bedward@gmail.com", role="cre"),
+  person("Murray", "Ellis", email="murray.ellis@environment.nsw.gov.au", role="aut"))
+Description: Functions to generate and plot 2D random walks.
+License: MIT + file LICENSE
+Depends: R (>= 3.2.0)
+Imports: 
+  ggplot2(>= 1.0.1)
+LazyData: TRUE
+Suggests: knitr
+VignetteBuilder: knitr
