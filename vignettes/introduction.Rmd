@@ -1,0 +1,171 @@
+---
+title: "Introduction"
+author: "Michael Bedward"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+As a first example, we will generate a random walk where each step has a constant length and random direction:
+
+```{r}
+
+library(walkies)
+
+# A function to generate an angle for each step. It
+# takes a single argument (a walk.data object) which is
+# ignored here.
+angle_fn <- function(w) runif(1, -pi, pi)
+
+# Generate a walk starting from the point (0,0).
+# The default, constant step length of 1.0 will be used.
+w <- make_walk(x0 = 0, y0 = 0, dir0 = 0,
+               next.angle = angle_fn,
+               turning.angles = FALSE)
+```
+
+The `make_walk` function returns a `walk.data` object, which is a named list:
+
+```{r}
+names(w)
+```
+
+Plotting the walk:
+
+```{r fig.width=8, fig.align='center'}
+
+plot_walk(w)
+
+```
+
+A random walk where the direction of each step is independent is termed *uncorrelated*. In the example above, the random angles provided by `angle_fn` were used directly as the direction of each step. In a *correlated* random walk we instead treat the angles as *turning angles*, where the direction of step *i* is given by: 
+
+$\theta_i = \theta_{i-1} + d\theta$
+
+where $\theta_{i-1}$ is the previous direction and $d\theta$ is the turning angle.
+
+Let's modify the previous example to give a correlated random walk:
+
+```{r, fig.width=8, fig.align='center'}
+
+# Function to generate a random turning angle 
+# within a forty-five degree arc centred on zero
+angle_fn <- function(w) runif(1, -pi/8, pi/8)
+
+# Generate a walk starting from the point (0,0).
+# This time we set the turning.angles argument to TRUE
+# (which is its default value) to flag that we want a
+# correlated random walk.
+w <- make_walk(x0 = 0, y0 = 0, dir0 = 0,
+               next.angle = angle_fn,
+               turning.angles = TRUE)
+
+plot_walk(w)
+```
+
+We can generate some replicate walks with the same start position, angle and step length parameters and plot them together. The `plot_walk` function accepts a list of `walk.data` objects for this purpose:
+
+```{r, fig.width=8, fig.align='center'}
+
+ws <- lapply(1:40, function(i) {
+        make_walk(0, 0, 
+                  dir0 = runif(1, -pi, pi),
+                  next.angle = angle_fn)
+      })
+
+plot_walk(ws)
+
+```
+
+You might have noticed that we haven't specified a stopping rule for walks in any of the examples so far. The default, and quite arbitrary, rule used by `make_walk` is to stop after 100 steps. Alternative stopping conditions can be specified by supplying a function which takes a 'walk.data' object as its argument, and returns either `TRUE` if the walk has finished or `FALSE` for it to continue.
+
+```{r, fig.width=8, fig.align='center'}
+
+# Stop the walk when the direct distance from the start point 
+# has reached 50 or more.
+stop50 <- function(w) w$dist.direct >= 50
+
+# Generate a list of replicate walks with random starting directions,
+# and plot them.
+ws <- lapply(1:100, function(i) {
+        make_walk(0, 0, 
+                  dir0 = runif(1, -pi, pi),
+                  next.angle = angle_fn,
+                  stop.cond = stop50)
+      })
+
+plot_walk(ws)
+
+```
+
+So far the turning angles have been drawn from a uniform distribution. Sometimes, theory or supposition will suggest a particular distribution for turning angles. The walkies package includes functions for the standard and truncated Laplace distribution (aka the double exponential distribution) which have been used in studies of animal movement.
+
+```{r, fig.width=8, fig.align='center'}
+
+# Comparison of Laplace and truncated Laplace densities
+
+x <- seq( -(pi + 1), pi + 1, 0.001 )
+ds <- dlaplace(x, mean = 0, scale = 2)
+dt <- dtrunclaplace(x, mean = 0, scale = 2, lower = -pi, upper = pi)
+
+df <- data.frame(
+  x = rep(x, 2),
+  density = c(ds, dt),
+  distribution = factor( rep(c("Laplace", "Truncated Laplace"), each=length(x)) )
+)
+
+library(ggplot2)
+
+ggplot() + 
+  geom_line(data=df, aes(x=x, y=density, colour=distribution)) +
+  scale_x_continuous(breaks=c(-pi, 0, pi), labels=c("-pi", "0", "pi")) +
+  theme_bw()
+
+```
+
+Random turning angles in the interval (-pi, pi] can be drawn from the truncated Laplace distribution using the `rtrunclaplace` function, or `angle_laplace` which is a convenience wrapper function:
+
+```{r}
+# Using rtrunclaplace directly
+a <- rtrunclaplace(1, mean=0, scale=2, lower=-pi, upper=pi)
+
+# Equivalent call using angle_laplace
+a <- angle_laplace(scale = 2)
+```
+
+The next example illustrates the effect of different turning angle distributions. A narrow distribution (truncated laplace with small scale factor) produces more direct walks, while widening the distribution by increasing the scale factor produces more meandering walks:
+
+```{r, fig.width=8, fig.align='center'}
+
+  # A wrapper function to generate N walks with a given
+  # turning angle scale parameter and return them as a list.
+  #
+  do.walks <- function(N, scale, id) {
+    # A turning angle function to draw angles from a truncated
+    # Laplace distribution with the given scale
+    angles <- function(w) angle_laplace(scale)
+    
+    # Generate walks and collect in a list
+    lapply(1:N,
+           function(i) {
+             make_walk(0, 0,
+                       next.angle = angles,
+                       id = id)
+           })
+  }
+  
+  # 100 replicates for each of three alternative turning 
+  # angle distributions
+  narrow <- do.walks(100, 0.05, "narrow: scale=0.01")
+  medium <- do.walks(100, 0.25, "medium: scale=0.1")
+  wide   <- do.walks(100, 1.0, "wide: scale=0.5")
+  
+  # Combine the walks into a single list and plot them
+  walks <- c(narrow, medium, wide)
+  plot_walk(walks, colour = "direct", by.id=TRUE, nrow=1)
+
+```
+
