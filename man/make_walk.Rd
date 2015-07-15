@@ -4,9 +4,9 @@
 \alias{make_walk}
 \title{Creates a random walk path.}
 \usage{
-make_walk(x0, y0, dir0, next.angle, next.steplen, accept.pos = function(x, y)
-  TRUE, stop.cond = function(wdat) wdat$nsteps >= 100,
-  turning.angles = TRUE, accept.limit = 100, id = 1)
+make_walk(x0, y0, dir0, next.angle, next.steplen = 1,
+  accept.pos = function(x, y) TRUE, stop.cond = function(wdat) wdat$nsteps
+  >= 100, turning.angles = TRUE, accept.limit = 100, id = 1)
 }
 \arguments{
 \item{x0,y0}{Ordinates of the starting location.}
@@ -15,17 +15,18 @@ make_walk(x0, y0, dir0, next.angle, next.steplen, accept.pos = function(x, y)
 angle in the interval (-pi, pi] will be used.}
 
 \item{next.angle}{A function to generate angles. The function should take
-a single argument (current walk.data object).}
+a single argument (a walk.data object).}
 
-\item{next.steplen}{A function to generate step lengths. The function should take
-a single argument (current walk.data object).}
+\item{next.steplen}{Either a function to generate step lengths, or a numeric
+value for constant step length. If a function, it should take a single argument
+(a walk.data object).}
 
 \item{accept.pos}{A function to test if a candidate position is acceptable.
 The function should take two arguments: \code{x, y} ordinates of the proposed
 position.}
 
 \item{stop.cond}{A function to test if movement is finished.
-The function should take a single argument (current walk.data object).}
+The function should take a single argument (a walk.data object).}
 
 \item{turning.angles}{If \code{TRUE} (default), angles from the \code{next.angle}
 function are taken as turning angles, and the orientation of the moving

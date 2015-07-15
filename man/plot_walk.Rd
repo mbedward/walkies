@@ -4,7 +4,7 @@
 \alias{plot_walk}
 \title{Plots walk paths using ggplot.}
 \usage{
-plot_walk(w, colour = c("direct", "path", "none"), legend = TRUE,
+plot_walk(w, colour = c("none", "direct", "path"), legend = FALSE,
   by.id = FALSE, nrow = NULL, ncol = NULL)
 }
 \arguments{

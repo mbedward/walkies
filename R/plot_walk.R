@@ -20,9 +20,12 @@
 #'
 #' @return A plot object.
 #'
+#' @importFrom ggplot2 ggplot aes coord_equal facet_wrap
+#'   geom_path scale_colour_continuous theme theme_bw
+#'
 #' @export
 #'
-plot_walk <- function(w, colour=c("direct", "path", "none"), legend=TRUE, by.id=FALSE, nrow=NULL, ncol=NULL) {
+plot_walk <- function(w, colour=c("none", "direct", "path"), legend=FALSE, by.id=FALSE, nrow=NULL, ncol=NULL) {
 
   colour <- match.arg(colour)
 

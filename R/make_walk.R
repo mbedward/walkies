@@ -31,14 +31,15 @@
 #' @param dir0 Initial orientation (radians). If NULL or missing, a random
 #'   angle in the interval (-pi, pi] will be used.
 #' @param next.angle A function to generate angles. The function should take
-#'   a single argument (current walk.data object).
-#' @param next.steplen A function to generate step lengths. The function should take
-#'   a single argument (current walk.data object).
+#'   a single argument (a walk.data object).
+#' @param next.steplen Either a function to generate step lengths, or a numeric
+#'   value for constant step length. If a function, it should take a single argument
+#'   (a walk.data object).
 #' @param accept.pos A function to test if a candidate position is acceptable.
 #'   The function should take two arguments: \code{x, y} ordinates of the proposed
 #'   position.
 #' @param stop.cond A function to test if movement is finished.
-#'   The function should take a single argument (current walk.data object).
+#'   The function should take a single argument (a walk.data object).
 #' @param turning.angles If \code{TRUE} (default), angles from the \code{next.angle}
 #'   function are taken as turning angles, and the orientation of the moving
 #'   object at each step is the sum of its previous orientation and the turning
@@ -107,7 +108,8 @@
 #' @export
 #'
 make_walk <- function(x0, y0, dir0,
-                      next.angle, next.steplen,
+                      next.angle,
+                      next.steplen = 1.0,
                       accept.pos = function(x, y) TRUE,
                       stop.cond = function(wdat) wdat$nsteps >= 100,
                       turning.angles = TRUE,
@@ -120,8 +122,12 @@ make_walk <- function(x0, y0, dir0,
   if (missing(next.angle) || !is.function(next.angle))
     stop("next.angle argument must be provided as a function")
 
-  if (missing(next.steplen) || !is.function(next.steplen))
-    stop("next.steplen argument must be provided as a function")
+  if (is.numeric(next.steplen)) {
+    len <- next.steplen[1]
+    next.steplen <- function(...) len
+  }
+  else if (!is.function(next.steplen))
+    stop("next.steplen argument must a numeric value or a function")
 
   if (missing(id) || is.null(id))
     id <- 1
